@@ -75,46 +75,46 @@
                     <label for="studentNames" class="block text-gray-700 text-sm font-bold">Lista de Galardonados:</label>
                     <button onclick="clearList()" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-red-600 transition duration-300">Borrar Lista</button>
                 </div>
-                <textarea id="studentNames" class="w-full h-64 p-3 border border-gray-300 rounded-lg" placeholder="Escribe un nombre y presiona Enter para autocompletar el género..."></textarea>
+                <textarea id="studentNames" class="w-full h-64 p-3 border border-gray-300 rounded-lg" placeholder="Escribe un nombre y presiona Enter, o pega una lista para autocompletar el género..."></textarea>
             </div>
             <!-- Columna Derecha -->
             <div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="gradeInput" class="block text-gray-700 text-sm font-bold mb-2">Grado:</label>
-                        <input type="text" id="gradeInput" value="Octavo B" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <input type="text" id="gradeInput" placeholder="Ej: Octavo B" class="w-full p-3 border border-gray-300 rounded-lg">
                     </div>
                     <div>
-                        <label for="roleInput" class="block text-gray-700 text-sm font-bold mb-2">Rol (ej: ESTUDIANTE):</label>
-                        <input type="text" id="roleInput" value="ESTUDIANTE" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <label for="roleInput" class="block text-gray-700 text-sm font-bold mb-2">Rol:</label>
+                        <input type="text" id="roleInput" placeholder="Ej: ESTUDIANTE" class="w-full p-3 border border-gray-300 rounded-lg">
                     </div>
                 </div>
                 <div class="mt-4">
                     <label for="dateInput" class="block text-gray-700 text-sm font-bold mb-2">Fecha de Entrega:</label>
-                    <input type="text" id="dateInput" value="20 de octubre de 2025" class="w-full p-3 border border-gray-300 rounded-lg">
+                    <input type="text" id="dateInput" placeholder="Ej: veinte días del mes de octubre de 2025" class="w-full p-3 border border-gray-300 rounded-lg">
                 </div>
                  <div class="mt-4">
                     <label for="contestNameInput" class="block text-gray-700 text-sm font-bold mb-2">Nombre del Concurso:</label>
-                    <input type="text" id="contestNameInput" value="PRIMER CONCURSO ARTE LAB" class="w-full p-3 border border-gray-300 rounded-lg">
+                    <input type="text" id="contestNameInput" placeholder="Ej: PRIMER CONCURSO ARTE LAB" class="w-full p-3 border border-gray-300 rounded-lg">
                 </div>
                 <div class="grid grid-cols-2 gap-4 mt-4">
                     <div>
                         <label for="positionInput" class="block text-gray-700 text-sm font-bold mb-2">Puesto Obtenido:</label>
-                        <input type="text" id="positionInput" value="PRIMER PUESTO" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <input type="text" id="positionInput" placeholder="Ej: PRIMER PUESTO" class="w-full p-3 border border-gray-300 rounded-lg">
                     </div>
                     <div>
                         <label for="categoryInput" class="block text-gray-700 text-sm font-bold mb-2">Categoría:</label>
-                        <input type="text" id="categoryInput" value="Mejor Diseño de Flyer Publicitario" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <input type="text" id="categoryInput" placeholder="Ej: Mejor Diseño..." class="w-full p-3 border border-gray-300 rounded-lg">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4 mt-4">
                      <div>
                         <label for="teacherNameInput" class="block text-gray-700 text-sm font-bold mb-2">Nombre Docente:</label>
-                        <input type="text" id="teacherNameInput" value="PATRICIA PUERTAS" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <input type="text" id="teacherNameInput" placeholder="Nombre del Docente" class="w-full p-3 border border-gray-300 rounded-lg">
                     </div>
                      <div>
                         <label for="teacherTitleInput" class="block text-gray-700 text-sm font-bold mb-2">Cargo Docente:</label>
-                        <input type="text" id="teacherTitleInput" value="Docente / Coordinadora" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <input type="text" id="teacherTitleInput" placeholder="Cargo del Docente" class="w-full p-3 border border-gray-300 rounded-lg">
                     </div>
                 </div>
             </div>
@@ -179,24 +179,49 @@
     </template>
     
     <script>
-        const studentNamesTextarea = document.getElementById('studentNames');
+        const STORAGE_KEY = 'diplomaGeneratorData';
+
+        // Mapeo de todos los campos del formulario
+        const formFields = {
+            studentNames: document.getElementById('studentNames'),
+            grade: document.getElementById('gradeInput'),
+            role: document.getElementById('roleInput'),
+            date: document.getElementById('dateInput'),
+            contestName: document.getElementById('contestNameInput'),
+            position: document.getElementById('positionInput'),
+            category: document.getElementById('categoryInput'),
+            teacherName: document.getElementById('teacherNameInput'),
+            teacherTitle: document.getElementById('teacherTitleInput'),
+        };
+
         const diplomasContainer = document.getElementById('diplomas-container');
         const diplomaTemplate = document.getElementById('diploma-template');
-        const gradeInput = document.getElementById('gradeInput');
-        const roleInput = document.getElementById('roleInput');
-        const categoryInput = document.getElementById('categoryInput');
-        const dateInput = document.getElementById('dateInput');
-        const teacherNameInput = document.getElementById('teacherNameInput');
-        const teacherTitleInput = document.getElementById('teacherTitleInput');
-        const positionInput = document.getElementById('positionInput');
-        const contestNameInput = document.getElementById('contestNameInput');
+        
+        // --- Lógica de guardado y carga de datos ---
+        function saveData() {
+            const data = {};
+            for (const key in formFields) {
+                data[key] = formFields[key].value;
+            }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
 
-        const initialStudents = [
-            "AREVALO ARCON JOSE, M", "GONZALEZ SILVERA LILIBETH, F", "LINARES ESTEVEZ MAYTE, F",
-            "LUQUE GONZALEZ YANKELIS, F", "SIERRA OROZCO ANGGY, F", "SILVERA ESCOBAR DAYAR, F"
-        ];
-        studentNamesTextarea.value = initialStudents.join('\n');
-
+        function loadData() {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                for (const key in formFields) {
+                    if (data[key] !== undefined) {
+                        formFields[key].value = data[key];
+                    }
+                }
+            } else {
+                // Establecer valores por defecto si no hay nada guardado
+                formFields.date.value = 'veinte días del mes de octubre de 2025';
+            }
+        }
+        
+        // --- Lógica de manipulación de la lista de nombres ---
         function guessGender(name) {
             const firstName = name.trim().toUpperCase().split(' ')[0];
             const femaleExceptions = ['LILIBETH', 'MAYTE', 'YANKELIS', 'ANGGY', 'DAYAR'];
@@ -206,9 +231,27 @@
             return 'F'; // Default a Femenino por si no encuentra coincidencia
         }
 
-        studentNamesTextarea.addEventListener('keyup', (event) => {
+        const processTextarea = () => {
+             setTimeout(() => {
+                const lines = formFields.studentNames.value.split('\n');
+                const processedLines = lines.map(line => {
+                    const trimmedLine = line.trim();
+                    if (trimmedLine && !trimmedLine.includes(',')) {
+                        const name = trimmedLine;
+                        const gender = guessGender(name);
+                        return `${name.toUpperCase()}, ${gender}`;
+                    }
+                    return line;
+                });
+                formFields.studentNames.value = processedLines.join('\n');
+                saveData(); // Guardar después de procesar
+            }, 100);
+        };
+        
+        formFields.studentNames.addEventListener('paste', processTextarea);
+        formFields.studentNames.addEventListener('keyup', (event) => {
             if (event.key === 'Enter') {
-                const lines = studentNamesTextarea.value.split('\n');
+                const lines = formFields.studentNames.value.split('\n');
                 const lineIndexToProcess = lines.length - 2;
 
                 if (lineIndexToProcess >= 0) {
@@ -217,26 +260,46 @@
                         const name = line.trim();
                         const gender = guessGender(name);
                         lines[lineIndexToProcess] = `${name.toUpperCase()}, ${gender}`;
-                        studentNamesTextarea.value = lines.join('\n');
+                        formFields.studentNames.value = lines.join('\n');
                     }
                 }
             }
         });
 
         function clearList() {
-            studentNamesTextarea.value = '';
+            formFields.studentNames.value = '';
+            saveData(); // Guardar el estado limpio
+            generateDiplomas(); // Volver a generar la vista (mostrará el de muestra)
         }
 
+        // --- Lógica de generación de diplomas ---
         function generateDiplomas() {
             diplomasContainer.innerHTML = '';
-            const formData = {
-                names: studentNamesTextarea.value.split('\n').filter(name => name.trim() !== ''),
-                grade: gradeInput.value, role: roleInput.value.toUpperCase(), category: categoryInput.value,
-                date: dateInput.value, teacherName: teacherNameInput.value, teacherTitle: teacherTitleInput.value,
-                position: positionInput.value, contestName: contestNameInput.value
-            };
+            const formData = {};
+            for (const key in formFields) {
+                formData[key] = formFields[key].value;
+            }
 
-            formData.names.forEach(name => {
+            const names = formData.studentNames.split('\n').filter(name => name.trim() !== '');
+            
+            if (names.length === 0) {
+                // Generar un diploma de muestra si la lista está vacía
+                const diplomaNode = diplomaTemplate.content.cloneNode(true);
+                diplomaNode.querySelector('.gender-text').textContent = 'A/AL [ROL]:';
+                diplomaNode.querySelector('.recipient-display').textContent = 'NOMBRE DEL GALARDONADO';
+                diplomaNode.querySelector('.grade-display').textContent = `del Grado ${formData.grade || '[GRADO]'}`;
+                diplomaNode.querySelector('.gender-award-text').textContent = 'merecedor(a)';
+                diplomaNode.querySelector('.position-display').textContent = formData.position || '[PUESTO]';
+                diplomaNode.querySelector('.category-display').textContent = formData.category || '[CATEGORÍA]';
+                diplomaNode.querySelector('.contest-name-display').textContent = formData.contestName || '[CONCURSO]';
+                diplomaNode.querySelector('.date-display').textContent = `Dado en Baranoa, a los ${formData.date || '[FECHA]'}.`;
+                diplomaNode.querySelector('.teacher-name-display').textContent = (formData.teacherName || '[DOCENTE]').toUpperCase();
+                diplomaNode.querySelector('.teacher-title-display').textContent = formData.teacherTitle || '[CARGO]';
+                diplomasContainer.appendChild(diplomaNode);
+                return;
+            }
+
+            names.forEach(name => {
                 const diplomaNode = diplomaTemplate.content.cloneNode(true);
                 const parts = name.split(',');
                 const studentName = parts[0].trim();
@@ -244,12 +307,13 @@
 
                 const genderTextElement = diplomaNode.querySelector('.gender-text');
                 const genderAwardTextElement = diplomaNode.querySelector('.gender-award-text');
+                const role = formData.role.toUpperCase() || 'GALARDONADO';
 
                 if (gender === 'M') {
-                    genderTextElement.textContent = `AL ${formData.role}:`;
+                    genderTextElement.textContent = `AL ${role}:`;
                     genderAwardTextElement.textContent = 'merecedor';
                 } else {
-                    genderTextElement.textContent = `A LA ${formData.role}:`;
+                    genderTextElement.textContent = `A LA ${role}:`;
                     genderAwardTextElement.textContent = 'merecedora';
                 }
 
@@ -268,8 +332,8 @@
 
         function downloadPDF() {
             const element = diplomasContainer;
-            if (element.children.length === 0) {
-                alert("Primero debes generar los diplomas.");
+            if (element.children.length === 0 || (formFields.studentNames.value.trim() === '' && element.children.length > 0)) {
+                alert("La lista de galardonados está vacía. Añade nombres para generar el PDF.");
                 return;
             }
             
@@ -283,7 +347,17 @@
             html2pdf().from(element).set(opt).save();
         }
 
-        window.onload = generateDiplomas;
+        // --- Inicialización ---
+        // Asignar listeners para guardar automáticamente
+        Object.values(formFields).forEach(field => {
+            field.addEventListener('input', saveData);
+        });
+
+        // Cargar datos al iniciar y generar vista previa
+        window.onload = () => {
+            loadData();
+            generateDiplomas();
+        };
     </script>
 
 </body>
