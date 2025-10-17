@@ -21,7 +21,7 @@
         body { font-family: var(--font-sans); background-color: #e0e6ec; }
         .diploma-page {
             width: 100%; display: flex; flex-direction: column; justify-content: center;
-            align-items: center; padding: 2rem; 
+            align-items: center; padding: 1rem; 
             page-break-after: always;
         }
         .diploma-page:last-child { page-break-after: auto; }
@@ -71,8 +71,8 @@
         <div class="grid md:grid-cols-2 gap-x-8 gap-y-4">
             <!-- Columna Izquierda -->
             <div>
-                <label for="studentNames" class="block text-gray-700 text-sm font-bold mb-2">Lista de Estudiantes:</label>
-                <textarea id="studentNames" class="w-full h-64 p-3 border border-gray-300 rounded-lg" placeholder="Pega los nombres, uno por línea..."></textarea>
+                <label for="studentNames" class="block text-gray-700 text-sm font-bold mb-2">Lista de Galardonados (Formato: Nombre, Género):</label>
+                <textarea id="studentNames" class="w-full h-64 p-3 border border-gray-300 rounded-lg" placeholder="Ej: JUAN PEREZ, M&#10;MARIA LOPEZ, F"></textarea>
             </div>
             <!-- Columna Derecha -->
             <div>
@@ -81,10 +81,14 @@
                         <label for="gradeInput" class="block text-gray-700 text-sm font-bold mb-2">Grado:</label>
                         <input type="text" id="gradeInput" value="Octavo B" class="w-full p-3 border border-gray-300 rounded-lg">
                     </div>
-                     <div>
-                        <label for="dateInput" class="block text-gray-700 text-sm font-bold mb-2">Fecha de Entrega:</label>
-                        <input type="text" id="dateInput" value="20 de octubre de 2025" class="w-full p-3 border border-gray-300 rounded-lg">
+                    <div>
+                        <label for="roleInput" class="block text-gray-700 text-sm font-bold mb-2">Rol (ej: ESTUDIANTE):</label>
+                        <input type="text" id="roleInput" value="ESTUDIANTE" class="w-full p-3 border border-gray-300 rounded-lg">
                     </div>
+                </div>
+                <div class="mt-4">
+                    <label for="dateInput" class="block text-gray-700 text-sm font-bold mb-2">Fecha de Entrega:</label>
+                    <input type="text" id="dateInput" value="20 de octubre de 2025" class="w-full p-3 border border-gray-300 rounded-lg">
                 </div>
                  <div class="mt-4">
                     <label for="contestNameInput" class="block text-gray-700 text-sm font-bold mb-2">Nombre del Concurso:</label>
@@ -145,7 +149,9 @@
                             <div class="recipient-display uppercase"></div>
                             <p class="grade-display text-lg font-medium text-gray-700 mt-2"></p>
                         </div>
-                        <div class="body-text text-center mx-auto max-w-3xl text-sm md:text-base"><p>Por haber obtenido el <strong class="position-display"></strong> en el "<strong class="contest-name-display"></strong>" en la categoría de <strong class="category-display"></strong>, demostrando una sobresaliente creatividad, talento técnico y compromiso con las artes visuales.</p></div>
+                        <div class="body-text text-center mx-auto max-w-3xl text-sm md:text-base">
+                            <p>En reconocimiento a su excepcional talento, creatividad y dominio técnico, cualidades que le hicieron <span class="gender-award-text"></span> del <strong class="position-display"></strong> en la categoría de <strong class="category-display"></strong> durante el "<strong class="contest-name-display"></strong>".</p>
+                        </div>
                     </main>
                     <footer class="text-center pb-4">
                         <p class="date-display text-base text-gray-600 mb-8"></p>
@@ -171,6 +177,7 @@
         const diplomasContainer = document.getElementById('diplomas-container');
         const diplomaTemplate = document.getElementById('diploma-template');
         const gradeInput = document.getElementById('gradeInput');
+        const roleInput = document.getElementById('roleInput');
         const categoryInput = document.getElementById('categoryInput');
         const dateInput = document.getElementById('dateInput');
         const teacherNameInput = document.getElementById('teacherNameInput');
@@ -178,14 +185,14 @@
         const positionInput = document.getElementById('positionInput');
         const contestNameInput = document.getElementById('contestNameInput');
 
-        // Lista de estudiantes inicial
+        // Lista de estudiantes inicial con el nuevo formato
         const initialStudents = [
-            "AREVALO ARCON JOSE",
-            "GONZALEZ SILVERA LILIBETH",
-            "LINARES ESTEVEZ MAYTE",
-            "LUQUE GONZALEZ YANKELIS",
-            "SIERRA OROZCO ANGGY",
-            "SILVERA ESCOBAR DAYAR"
+            "AREVALO ARCON JOSE, M",
+            "GONZALEZ SILVERA LILIBETH, F",
+            "LINARES ESTEVEZ MAYTE, F",
+            "LUQUE GONZALEZ YANKELIS, F",
+            "SIERRA OROZCO ANGGY, F",
+            "SILVERA ESCOBAR DAYAR, F"
         ];
         studentNamesTextarea.value = initialStudents.join('\n');
 
@@ -194,6 +201,7 @@
             
             const names = studentNamesTextarea.value.split('\n').filter(name => name.trim() !== '');
             const grade = gradeInput.value;
+            const role = roleInput.value.toUpperCase();
             const category = categoryInput.value;
             const date = dateInput.value;
             const teacherName = teacherNameInput.value;
@@ -205,20 +213,28 @@
             names.forEach(name => {
                 const diplomaNode = diplomaTemplate.content.cloneNode(true);
 
+                const parts = name.split(',');
+                const studentName = parts[0].trim();
+                const gender = (parts[1] || '').trim().toUpperCase();
+
                 const genderTextElement = diplomaNode.querySelector('.gender-text');
-                if (name.trim().toUpperCase().endsWith('JOSE')) {
-                    genderTextElement.textContent = 'AL ESTUDIANTE:';
+                const genderAwardTextElement = diplomaNode.querySelector('.gender-award-text');
+
+                if (gender === 'M') {
+                    genderTextElement.textContent = `AL ${role}:`;
+                    genderAwardTextElement.textContent = 'merecedor';
                 } else {
-                    genderTextElement.textContent = 'A LA ESTUDIANTE:';
+                    genderTextElement.textContent = `A LA ${role}:`;
+                    genderAwardTextElement.textContent = 'merecedora';
                 }
 
-                diplomaNode.querySelector('.recipient-display').textContent = name.trim();
+                diplomaNode.querySelector('.recipient-display').textContent = studentName;
                 diplomaNode.querySelector('.grade-display').textContent = `del Grado ${grade}`;
                 diplomaNode.querySelector('.position-display').textContent = position;
                 diplomaNode.querySelector('.category-display').textContent = category;
                 diplomaNode.querySelector('.contest-name-display').textContent = contestName;
                 diplomaNode.querySelector('.date-display').textContent = `Dado en Baranoa, a los ${date}.`;
-                diplomaNode.querySelector('.teacher-name-display').textContent = teacherName;
+                diplomaNode.querySelector('.teacher-name-display').textContent = teacherName.toUpperCase();
                 diplomaNode.querySelector('.teacher-title-display').textContent = teacherTitle;
 
 
@@ -244,6 +260,7 @@
             html2pdf().from(element).set(opt).save();
         }
 
+        // Generar diplomas al cargar para mostrar algo
         window.onload = generateDiplomas;
     </script>
 
