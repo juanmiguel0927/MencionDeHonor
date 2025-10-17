@@ -29,11 +29,10 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            page-break-after: always;
+            page-break-inside: avoid;
             box-sizing: border-box;
         }
-        .diploma-page:last-child { page-break-after: auto; }
-
+       
         .diploma-container {
             width: 100%;
             height: 100%;
@@ -80,9 +79,9 @@
         /* Estilos de impresión para html2pdf y el navegador */
         @media print {
             body { background-color: #fff; }
-            .controls, #diplomas-container > .diploma-page { margin: 0; padding: 0; }
             .controls { display: none; }
-            .diploma-page { box-shadow: none; width: 100%; height: 100vh; }
+            #diplomas-container > .diploma-page { margin: 0; padding: 0; box-shadow: none; }
+            .diploma-page { width: 100%; height: 100vh; }
             @page { size: A4 landscape; margin: 0; }
         }
     </style>
@@ -138,12 +137,12 @@
                 </div>
                 <div class="grid grid-cols-2 gap-4 mt-4">
                      <div>
-                        <label for="teacherNameInput" class="block text-gray-700 text-sm font-bold mb-2">Nombre Docente:</label>
-                        <input type="text" id="teacherNameInput" placeholder="Nombre del Docente" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <label for="teacherNameInput" class="block text-gray-700 text-sm font-bold mb-2">Nombre:</label>
+                        <input type="text" id="teacherNameInput" placeholder="Nombre del firmante" class="w-full p-3 border border-gray-300 rounded-lg">
                     </div>
                      <div>
-                        <label for="teacherTitleInput" class="block text-gray-700 text-sm font-bold mb-2">Cargo Docente:</label>
-                        <input type="text" id="teacherTitleInput" placeholder="Cargo del Docente" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <label for="teacherTitleInput" class="block text-gray-700 text-sm font-bold mb-2">Cargo:</label>
+                        <input type="text" id="teacherTitleInput" placeholder="Cargo del firmante" class="w-full p-3 border border-gray-300 rounded-lg">
                     </div>
                 </div>
             </div>
@@ -369,7 +368,7 @@
                 jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
             };
 
-            // Let the library handle the pages based on CSS page-break properties
+            // La clave es apuntar al contenedor que tiene todos los diplomas
             html2pdf().from(diplomasContainer).set(opt).save();
         }
 
