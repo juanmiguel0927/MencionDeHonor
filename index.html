@@ -19,19 +19,42 @@
             --font-script: 'Great Vibes', cursive;
         }
         body { font-family: var(--font-sans); background-color: #e0e6ec; }
+        
+        /* Contenedor de página con tamaño fijo para PDF */
         .diploma-page {
-            width: 100%; display: flex; flex-direction: column; justify-content: center;
-            align-items: center; padding: 1rem; 
+            width: 1000px;
+            height: 707px; /* Proporción A4 horizontal (1000 / 1.414) */
+            margin: 2rem auto;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             page-break-after: always;
+            box-sizing: border-box;
         }
         .diploma-page:last-child { page-break-after: auto; }
+
         .diploma-container {
-            width: 100%; max-width: 1000px; background-color: var(--color-fondo-pergamino); border: 2px solid var(--color-dorado-acento);
-            padding: 0.5rem; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2); position: relative; overflow: hidden;
+            width: 100%;
+            height: 100%;
+            background-color: var(--color-fondo-pergamino);
+            border: 2px solid var(--color-dorado-acento);
+            padding: 0.5rem;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            box-sizing: border-box;
         }
         .diploma-inner-border {
-            border: 6px solid var(--color-azul-oscuro); padding: 2.5rem; min-height: 620px; position: relative; z-index: 1;
-            display: flex; flex-direction: column; justify-content: space-between;
+            border: 6px solid var(--color-azul-oscuro);
+            height: 100%;
+            padding: 2.5rem;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
         }
         .main-title {
             font-family: var(--font-serif); font-size: 3.2rem; font-weight: 800; color: var(--color-azul-oscuro); text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
@@ -46,19 +69,20 @@
         }
         .signature-line { height: 1.5px; background-color: #555555; margin-top: 40px; }
         .controls {
-            background-color: white; padding: 2rem; margin: 2rem; border-radius: 1rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            max-width: 1000px; width: 100%;
+            background-color: white; padding: 2rem; margin: 2rem auto; border-radius: 1rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 1000px; width: calc(100% - 4rem);
         }
         .watermark {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 400px; height: auto; opacity: 0.08; z-index: 0; pointer-events: none;
         }
+
+        /* Estilos de impresión para html2pdf y el navegador */
         @media print {
             body { background-color: #fff; }
+            .controls, #diplomas-container > .diploma-page { margin: 0; padding: 0; }
             .controls { display: none; }
-            .diploma-page { padding: 0; margin: 0; height: 100%; width: 100%; box-sizing: border-box; }
-            .diploma-container { box-shadow: none; border: none; width: 100%; height: 100%; box-sizing: border-box;}
-            .diploma-inner-border { border: 6px solid #000; height: 100%; box-sizing: border-box; }
+            .diploma-page { box-shadow: none; width: 100%; height: 100vh; }
             @page { size: A4 landscape; margin: 0; }
         }
     </style>
@@ -76,7 +100,11 @@
                     <label for="studentNames" class="block text-gray-700 text-sm font-bold">Lista de Galardonados:</label>
                     <button onclick="clearList()" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-red-600 transition duration-300">Borrar Lista</button>
                 </div>
-                <textarea id="studentNames" class="w-full h-64 p-3 border border-gray-300 rounded-lg" placeholder="Escribe un nombre y presiona Enter, o pega una lista para autocompletar el género..."></textarea>
+                <textarea id="studentNames" class="w-full h-40 p-3 border border-gray-300 rounded-lg" placeholder="Escribe un nombre y presiona Enter, o pega una lista para autocompletar el género..."></textarea>
+                 <div class="mt-4">
+                    <label for="reasonInput" class="block text-gray-700 text-sm font-bold mb-2">Motivo del Reconocimiento:</label>
+                    <textarea id="reasonInput" class="w-full h-24 p-3 border border-gray-300 rounded-lg"></textarea>
+                </div>
             </div>
             <!-- Columna Derecha -->
             <div>
@@ -92,7 +120,7 @@
                 </div>
                 <div class="mt-4">
                     <label for="dateInput" class="block text-gray-700 text-sm font-bold mb-2">Fecha de Entrega:</label>
-                    <input type="text" id="dateInput" class="w-full p-3 border border-gray-300 rounded-lg">
+                    <input type="text" id="dateInput" placeholder="Ej: 17 días del mes de octubre de 2025" class="w-full p-3 border border-gray-300 rounded-lg">
                 </div>
                  <div class="mt-4">
                     <label for="contestNameInput" class="block text-gray-700 text-sm font-bold mb-2">Nombre del Concurso:</label>
@@ -155,7 +183,7 @@
                         </div>
                         <div class="body-text text-center mx-auto max-w-3xl text-sm md:text-base">
                             <p>
-                                En reconocimiento a su excepcional talento, creatividad y dominio técnico, cualidades que le hicieron <span class="gender-award-text"></span> del <strong class="position-display"></strong> en la categoría de <strong class="category-display"></strong> durante el
+                                <span class="reason-text"></span> <span class="gender-award-text"></span> del <strong class="position-display"></strong> en la categoría de <strong class="category-display"></strong> durante el
                                 <span class="block mt-1 font-bold text-lg" style="color: var(--color-azul-medio);">"<span class="contest-name-display"></span>"</span>
                             </p>
                         </div>
@@ -187,7 +215,7 @@
             role: document.getElementById('roleInput'), date: document.getElementById('dateInput'),
             contestName: document.getElementById('contestNameInput'), position: document.getElementById('positionInput'),
             category: document.getElementById('categoryInput'), teacherName: document.getElementById('teacherNameInput'),
-            teacherTitle: document.getElementById('teacherTitleInput'),
+            teacherTitle: document.getElementById('teacherTitleInput'), reason: document.getElementById('reasonInput'),
         };
 
         const diplomasContainer = document.getElementById('diplomas-container');
@@ -206,6 +234,8 @@
                 for (const key in formFields) {
                     if (data[key] !== undefined) { formFields[key].value = data[key]; }
                 }
+            } else {
+                 formFields.reason.value = 'En reconocimiento a su excepcional talento, creatividad y dominio técnico, cualidades que le hicieron';
             }
         }
         
@@ -267,6 +297,7 @@
                 diplomaNode.querySelector('.gender-text').textContent = diplomaData.genderText;
                 diplomaNode.querySelector('.recipient-display').textContent = diplomaData.name;
                 diplomaNode.querySelector('.grade-display').textContent = diplomaData.grade;
+                diplomaNode.querySelector('.reason-text').textContent = diplomaData.reason;
                 diplomaNode.querySelector('.gender-award-text').textContent = diplomaData.awardText;
                 diplomaNode.querySelector('.position-display').textContent = diplomaData.position;
                 diplomaNode.querySelector('.category-display').textContent = diplomaData.category;
@@ -280,7 +311,9 @@
             if (names.length === 0) {
                 renderDiploma({
                     genderText: 'A/AL [ROL]:', name: 'NOMBRE DEL GALARDONADO',
-                    grade: `del Grado ${formData.grade || '[GRADO]'}`, awardText: 'merecedor(a)',
+                    grade: `del Grado ${formData.grade || '[GRADO]'}`, 
+                    reason: formData.reason || 'En reconocimiento a su excepcional talento...',
+                    awardText: 'merecedor(a)',
                     position: formData.position || '[PUESTO]', category: formData.category || '[CATEGORÍA]',
                     contestName: formData.contestName || '[CONCURSO]', date: `${formData.date || '[FECHA]'}`,
                     teacherName: formData.teacherName || '[DOCENTE]', teacherTitle: formData.teacherTitle || '[CARGO]'
@@ -292,33 +325,51 @@
                 const parts = name.split(',');
                 const studentName = parts[0].trim();
                 const gender = (parts[1] || '').trim().toUpperCase();
-                const role = formData.role.toUpperCase() || 'GALARDONADO';
+                
+                let role = formData.role.toUpperCase() || 'GALARDONADO';
+                let genderPrefix = 'A LA';
+                if (gender === 'M') {
+                    genderPrefix = 'AL';
+                    if(role.endsWith('A')) {
+                        role = role.slice(0, -1) + 'O';
+                    }
+                } else {
+                    if(role.endsWith('O')) {
+                        role = role.slice(0, -1) + 'A';
+                    }
+                }
+
 
                 const diplomaData = {
                     name: studentName,
                     grade: `del Grado ${formData.grade}`,
-                    genderText: gender === 'M' ? `AL ${role}:` : `A LA ${role}:`,
+                    genderText: `${genderPrefix} ${role}:`,
                     awardText: gender === 'M' ? 'merecedor' : 'merecedora',
-                    position: formData.position, category: formData.category, contestName: formData.contestName,
-                    date: `${formData.date}`, teacherName: formData.teacherName, teacherTitle: formData.teacherTitle
+                    reason: formData.reason, position: formData.position, category: formData.category, 
+                    contestName: formData.contestName, date: `${formData.date}`, 
+                    teacherName: formData.teacherName, teacherTitle: formData.teacherTitle
                 };
                 renderDiploma(diplomaData);
             });
         }
 
         function downloadPDF() {
-            const studentList = formFields.studentNames.value.trim();
             if (diplomasContainer.children.length === 0) {
                  alert("No hay diplomas para generar. Presiona 'Generar Diplomas' primero.");
                 return;
             }
+
+            window.scrollTo(0, 0); // Desplaza la ventana al inicio
             
             const opt = {
-                margin:       0, filename: 'Menciones_de_Honor.pdf',
+                margin:       0,
+                filename:     'Menciones_de_Honor.pdf',
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2, useCORS: true },
                 jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
             };
+
+            // Let the library handle the pages based on CSS page-break properties
             html2pdf().from(diplomasContainer).set(opt).save();
         }
 
@@ -329,11 +380,10 @@
         window.onload = () => {
             loadData();
             if (formFields.date.value === '') {
-                const today = new Date();
-                const day = today.getDate();
-                const year = today.getFullYear();
-                const month = today.toLocaleDateString('es-ES', { month: 'long' });
-                formFields.date.value = `${day} días del mes de ${month} de ${year}`;
+                // No pre-llenar, dejar el placeholder
+            }
+            if (formFields.reason.value === '') {
+                formFields.reason.value = 'En reconocimiento a su excepcional talento, creatividad y dominio técnico, cualidades que le hicieron';
             }
             generateDiplomas();
         };
