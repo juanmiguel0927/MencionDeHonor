@@ -3,60 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Menciones de Honor - IET Juan José Nieto</title>
+    <title>Generador de Diplomas y Combinador PDF</title>
     <!-- Carga de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Carga de Fuentes de Google -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Playfair+Display:wght@700;800&family=Great+Vibes&display=swap" rel="stylesheet">
-    <!-- Librería para generar PDF (CORREGIDO DEFINITIVAMENTE) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" xintegrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <!-- Librerías para exportación y combinación -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
+
     <style>
+        /* --- ESTILOS GENERALES Y DEL GENERADOR --- */
         :root {
             --color-azul-oscuro: #0a2d57; --color-azul-medio: #3a6ea5; --color-dorado-acento: #c09553;
             --color-fondo-pergamino: #fdfbf7; --font-serif: 'Playfair Display', serif; --font-sans: 'Inter', sans-serif;
             --font-script: 'Great Vibes', cursive;
         }
-        body { font-family: var(--font-sans); background-color: #e0e6ec; }
-        
-        /* Contenedor de página con tamaño fijo para PDF */
+        body { font-family: var(--font-sans); background-color: #e0e6ec; padding-bottom: 4rem; }
         .diploma-page {
-            width: 1000px;
-            height: 707px; /* Proporción A4 horizontal (1000 / 1.414) */
-            margin: 2rem auto;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            page-break-inside: avoid;
-            box-sizing: border-box;
+            width: 1000px; height: 707px; margin: 2rem auto; padding: 0; display: flex;
+            justify-content: center; align-items: center; page-break-inside: avoid; box-sizing: border-box;
         }
-       
         .diploma-container {
-            width: 100%;
-            height: 100%;
-            background-color: var(--color-fondo-pergamino);
-            border: 2px solid var(--color-dorado-acento);
-            padding: 0.5rem;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
-            position: relative;
-            overflow: hidden;
-            box-sizing: border-box;
+            width: 100%; height: 100%; background-color: var(--color-fondo-pergamino); border: 2px solid var(--color-dorado-acento);
+            padding: 0.5rem; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2); position: relative; overflow: hidden; box-sizing: border-box;
         }
         .diploma-inner-border {
-            border: 6px solid var(--color-azul-oscuro);
-            height: 100%;
-            padding: 2.5rem;
-            position: relative;
-            z-index: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            box-sizing: border-box;
+            border: 6px solid var(--color-azul-oscuro); height: 100%; padding: 2.5rem; position: relative;
+            z-index: 1; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;
         }
         .main-title {
-            font-family: var(--font-serif); font-size: 3.2rem; font-weight: 800; color: var(--color-azul-oscuro); text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+            font-family: var(--font-serif); font-size: 3.2rem; font-weight: 800; color: var(--color-azul-oscuro);
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
         }
         .script-text { font-family: var(--font-script); color: var(--color-dorado-acento); font-size: 2.2rem; }
         .recipient-display {
@@ -64,31 +48,82 @@
             letter-spacing: 1px; padding: 0 1rem;
         }
         .decorative-divider {
-            height: 2px; width: 150px; background: linear-gradient(to right, transparent, var(--color-dorado-acento), transparent); margin: 0.5rem auto;
+            height: 2px; width: 150px; background: linear-gradient(to right, transparent, var(--color-dorado-acento), transparent);
+            margin: 0.5rem auto;
         }
         .signature-line { height: 1.5px; background-color: #555555; margin-top: 40px; }
         .controls {
-            background-color: white; padding: 2rem; margin: 2rem auto; border-radius: 1rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            max-width: 1000px; width: calc(100% - 4rem);
+            background-color: white; padding: 2rem; margin: 2rem auto; border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 1000px; width: calc(100% - 4rem);
         }
         .watermark {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 400px; height: auto; opacity: 0.08; z-index: 0; pointer-events: none;
         }
+        .btn-disabled { cursor: not-allowed; opacity: 0.6; }
 
-        /* Estilos de impresión para html2pdf y el navegador */
         @media print {
             body { background-color: #fff; }
-            .controls { display: none; }
+            .controls, .combiner-container { display: none; }
             #diplomas-container > .diploma-page { margin: 0; padding: 0; box-shadow: none; }
             .diploma-page { width: 100%; height: 100vh; }
             @page { size: A4 landscape; margin: 0; }
         }
+
+        /* --- ESTILOS DEL COMBINADOR DE PDF --- */
+        .combiner-container {
+            width: 100%; max-width: 1000px; margin: 2rem auto; background-color: #ffffff;
+            border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); padding: 30px 40px; box-sizing: border-box;
+        }
+        .combiner-container h1 { text-align: center; color: #007bff; margin-bottom: 25px; }
+        #drop-zone {
+            border: 2px dashed #dee2e6; border-radius: 8px; padding: 40px 20px; text-align: center;
+            cursor: pointer; transition: background-color 0.2s, border-color 0.2s; background-color: #e9ecef;
+        }
+        #drop-zone.drag-over { border-color: #007bff; background-color: #e0eaff; }
+        #file-input { display: none; }
+        #file-list {
+            list-style: none; padding: 0; margin-top: 20px; min-height: 50px;
+            border: 1px solid #dee2e6; border-radius: 8px; padding: 10px;
+        }
+        .file-item {
+            display: flex; align-items: center; justify-content: space-between; padding: 12px;
+            background-color: #fdfdff; border: 1px solid #dee2e6; border-radius: 6px;
+            margin-bottom: 8px; cursor: grab; user-select: none;
+        }
+        .file-item.dragging { opacity: 0.5; background-color: #cce5ff; }
+        .file-item-name { font-size: 14px; }
+        .remove-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #6c757d; }
+        #submit-btn {
+            padding: 15px; font-size: 16px; font-weight: bold; color: white; background-color: #007bff;
+            border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s;
+        }
+        #submit-btn:disabled { background-color: #6c757d; cursor: not-allowed; }
+        #status-container { text-align: center; margin-top: 15px; }
     </style>
 </head>
 <body>
 
-    <!-- PANEL DE CONTROLES -->
+    <!-- HERRAMIENTA PARA COMBINAR ARCHIVOS -->
+    <div class="combiner-container">
+        <h1>Combinar y Convertir a PDF</h1>
+        <form id="upload-form">
+            <div id="drop-zone">
+                <p>Arrastra y suelta tus archivos aquí, o <strong>haz clic para seleccionar</strong></p>
+                <small>(Permitidos: .pdf, .png, .jpg, .jpeg, .txt)</small>
+                <input type="file" id="file-input" multiple>
+            </div>
+            
+            <ul id="file-list"></ul>
+            
+            <button type="submit" id="submit-btn" disabled>Combinar Archivos</button>
+            <div id="status-container">
+                <div id="status-message"></div>
+            </div>
+        </form>
+    </div>
+
+    <!-- PANEL DE CONTROLES DEL GENERADOR -->
     <div class="controls">
         <h2 class="text-2xl font-bold text-center" style="color: var(--color-azul-oscuro);">Generador de Diplomas</h2>
         <p class="text-center text-sm text-gray-500 mb-6">Herramienta creada por Juan Miguel Rios Redondo</p>
@@ -99,7 +134,7 @@
                     <label for="studentNames" class="block text-gray-700 text-sm font-bold">Lista de Galardonados:</label>
                     <button onclick="clearList()" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-red-600 transition duration-300">Borrar Lista</button>
                 </div>
-                <textarea id="studentNames" class="w-full h-40 p-3 border border-gray-300 rounded-lg" placeholder="Escribe un nombre y presiona Enter, o pega una lista para autocompletar el género..."></textarea>
+                <textarea id="studentNames" class="w-full h-40 p-3 border border-gray-300 rounded-lg" placeholder="Escribe un nombre y presiona Enter..."></textarea>
                  <div class="mt-4">
                     <label for="reasonInput" class="block text-gray-700 text-sm font-bold mb-2">Motivo del Reconocimiento:</label>
                     <textarea id="reasonInput" class="w-full h-24 p-3 border border-gray-300 rounded-lg"></textarea>
@@ -147,17 +182,16 @@
                 </div>
             </div>
         </div>
-        <div class="flex justify-center gap-4 mt-6">
-            <button onclick="generateDiplomas()" class="bg-blue-800 text-white font-bold py-3 px-6 rounded-full hover:bg-blue-900 transition duration-300 shadow-xl">
-                Generar Diplomas
-            </button>
-            <button onclick="downloadPDF()" class="bg-green-700 text-white font-bold py-3 px-6 rounded-full hover:bg-green-800 transition duration-300 shadow-xl flex items-center gap-2">
+        <div class="flex justify-center flex-wrap gap-4 mt-8">
+            <button id="generateBtn" onclick="generateDiplomas()" class="bg-blue-800 text-white font-bold py-3 px-6 rounded-full hover:bg-blue-900 transition duration-300 shadow-xl">Generar Diplomas</button>
+            <button id="downloadBtn" onclick="downloadPNGs()" class="bg-green-700 text-white font-bold py-3 px-6 rounded-full hover:bg-green-800 transition duration-300 shadow-xl flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Descargar PDF
+                Descargar PNG
             </button>
         </div>
+        <div id="feedbackMessage" class="text-center text-blue-600 font-medium mt-4 h-5"></div>
     </div>
-
+    
     <!-- Contenedor donde se insertarán los diplomas generados -->
     <div id="diplomas-container"></div>
 
@@ -207,8 +241,8 @@
     </template>
     
     <script>
+        // --- CÓDIGO DEL GENERADOR DE DIPLOMAS ---
         const STORAGE_KEY = 'diplomaGeneratorData';
-
         const formFields = {
             studentNames: document.getElementById('studentNames'), grade: document.getElementById('gradeInput'),
             role: document.getElementById('roleInput'), date: document.getElementById('dateInput'),
@@ -216,10 +250,11 @@
             category: document.getElementById('categoryInput'), teacherName: document.getElementById('teacherNameInput'),
             teacherTitle: document.getElementById('teacherTitleInput'), reason: document.getElementById('reasonInput'),
         };
-
         const diplomasContainer = document.getElementById('diplomas-container');
         const diplomaTemplate = document.getElementById('diploma-template');
-        
+        const feedbackEl = document.getElementById('feedbackMessage');
+        const downloadButton = document.getElementById('downloadBtn');
+
         function saveData() {
             const data = {};
             for (const key in formFields) { data[key] = formFields[key].value; }
@@ -284,13 +319,29 @@
             generateDiplomas();
         }
 
+        function showFeedback(message, isError = false, duration = 4000) {
+            feedbackEl.textContent = message;
+            feedbackEl.style.color = isError ? '#dc2626' : '#2563eb';
+            if (duration > 0) {
+                setTimeout(() => { feedbackEl.textContent = ''; }, duration);
+            }
+        }
+        
+        function updateButtonStates(disabled) {
+            if(disabled) {
+                downloadButton.classList.add('btn-disabled');
+                downloadButton.disabled = true;
+            } else {
+                downloadButton.classList.remove('btn-disabled');
+                downloadButton.disabled = false;
+            }
+        }
+
         function generateDiplomas() {
             diplomasContainer.innerHTML = '';
             const formData = {};
             for (const key in formFields) { formData[key] = formFields[key].value; }
-
             const names = formData.studentNames.split('\n').filter(name => name.trim() !== '');
-            
             const renderDiploma = (diplomaData) => {
                 const diplomaNode = diplomaTemplate.content.cloneNode(true);
                 diplomaNode.querySelector('.gender-text').textContent = diplomaData.genderText;
@@ -306,88 +357,271 @@
                 diplomaNode.querySelector('.teacher-title-display').textContent = diplomaData.teacherTitle;
                 diplomasContainer.appendChild(diplomaNode);
             };
-
             if (names.length === 0) {
                 renderDiploma({
                     genderText: 'A/AL [ROL]:', name: 'NOMBRE DEL GALARDONADO',
                     grade: `del Grado ${formData.grade || '[GRADO]'}`, 
-                    reason: formData.reason || 'En reconocimiento a su excepcional talento...',
-                    awardText: 'merecedor(a)',
+                    reason: formData.reason || 'En reconocimiento...', awardText: 'merecedor(a)',
                     position: formData.position || '[PUESTO]', category: formData.category || '[CATEGORÍA]',
                     contestName: formData.contestName || '[CONCURSO]', date: `${formData.date || '[FECHA]'}`,
                     teacherName: formData.teacherName || '[DOCENTE]', teacherTitle: formData.teacherTitle || '[CARGO]'
                 });
+                updateButtonStates(true);
                 return;
             }
-
+            updateButtonStates(false);
             names.forEach(name => {
                 const parts = name.split(',');
                 const studentName = parts[0].trim();
                 const gender = (parts[1] || '').trim().toUpperCase();
-                
                 let role = formData.role.toUpperCase() || 'GALARDONADO';
                 let genderPrefix = 'A LA';
                 if (gender === 'M') {
                     genderPrefix = 'AL';
-                    if(role.endsWith('A')) {
-                        role = role.slice(0, -1) + 'O';
-                    }
+                    if(role.endsWith('A')) role = role.slice(0, -1) + 'O';
                 } else {
-                    if(role.endsWith('O')) {
-                        role = role.slice(0, -1) + 'A';
-                    }
+                    if(role.endsWith('O')) role = role.slice(0, -1) + 'A';
                 }
-
-
-                const diplomaData = {
-                    name: studentName,
-                    grade: `del Grado ${formData.grade}`,
-                    genderText: `${genderPrefix} ${role}:`,
-                    awardText: gender === 'M' ? 'merecedor' : 'merecedora',
+                renderDiploma({
+                    name: studentName, grade: `del Grado ${formData.grade}`,
+                    genderText: `${genderPrefix} ${role}:`, awardText: gender === 'M' ? 'merecedor' : 'merecedora',
                     reason: formData.reason, position: formData.position, category: formData.category, 
                     contestName: formData.contestName, date: `${formData.date}`, 
                     teacherName: formData.teacherName, teacherTitle: formData.teacherTitle
-                };
-                renderDiploma(diplomaData);
+                });
             });
         }
 
-        function downloadPDF() {
-            if (diplomasContainer.children.length === 0) {
-                 alert("No hay diplomas para generar. Presiona 'Generar Diplomas' primero.");
-                return;
+        async function downloadPNGs() {
+            if (diplomasContainer.children.length === 0 || !formFields.studentNames.value.trim()) {
+                showFeedback("No hay diplomas para generar.", true); return;
             }
-
-            window.scrollTo(0, 0); // Desplaza la ventana al inicio
-            
-            const opt = {
-                margin:       0,
-                filename:     'Menciones_de_Honor.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
-            };
-
-            // La clave es apuntar al contenedor que tiene todos los diplomas
-            html2pdf().from(diplomasContainer).set(opt).save();
+            const originalBtnContent = downloadButton.innerHTML;
+            downloadButton.innerHTML = '<span>Procesando...</span>';
+            downloadButton.disabled = true;
+            downloadButton.classList.add('btn-disabled');
+            try {
+                if (typeof window.html2canvas === 'undefined' || typeof window.JSZip === 'undefined' || typeof window.saveAs === 'undefined') {
+                    showFeedback("Error: Librerías no cargadas. Revise la conexión.", true); return;
+                }
+                const diplomas = diplomasContainer.querySelectorAll('.diploma-page');
+                if (diplomas.length === 1) {
+                    showFeedback('Generando PNG...', false, 0);
+                    const diploma = diplomas[0];
+                    const studentName = diploma.querySelector('.recipient-display').textContent.trim().replace(/\s+/g, '_') || 'diploma';
+                    const canvas = await html2canvas(diploma, { scale: 3, useCORS: true });
+                    canvas.toBlob(function(blob) {
+                        saveAs(blob, `${studentName}.png`);
+                        showFeedback('PNG descargado con éxito.');
+                    });
+                } else {
+                    showFeedback('Creando archivo ZIP...', false, 0);
+                    const zip = new JSZip();
+                    for (let i = 0; i < diplomas.length; i++) {
+                        const diploma = diplomas[i];
+                        const studentName = diploma.querySelector('.recipient-display').textContent.trim().replace(/\s+/g, '_') || `diploma_${i+1}`;
+                        showFeedback(`Procesando ${i + 1}/${diplomas.length}...`, false, 0);
+                        const canvas = await html2canvas(diploma, { scale: 3, useCORS: true });
+                        const pngBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                        zip.file(`${studentName}.png`, pngBlob);
+                    }
+                    showFeedback('Generando archivo ZIP...', false, 0);
+                    const content = await zip.generateAsync({ type: "blob" });
+                    saveAs(content, "Menciones_de_Honor_PNGs.zip");
+                    showFeedback('Descarga de ZIP completada.');
+                }
+            } catch (error) {
+                console.error("Error durante descarga de PNG:", error);
+                showFeedback("Ocurrió un error al generar los archivos PNG.", true);
+            } finally {
+                downloadButton.innerHTML = originalBtnContent;
+                downloadButton.disabled = false;
+                downloadButton.classList.remove('btn-disabled');
+            }
         }
-
-        Object.values(formFields).forEach(field => {
-            field.addEventListener('input', saveData);
-        });
-
-        window.onload = () => {
-            loadData();
-            if (formFields.date.value === '') {
-                // No pre-llenar, dejar el placeholder
-            }
+        
+        // --- INICIALIZACIÓN DEL GENERADOR ---
+        window.addEventListener('DOMContentLoaded', () => {
+             loadData();
             if (formFields.reason.value === '') {
                 formFields.reason.value = 'En reconocimiento a su excepcional talento, creatividad y dominio técnico, cualidades que le hicieron';
             }
             generateDiplomas();
-        };
+        });
     </script>
+    
+    <!-- SCRIPT DEL COMBINADOR DE ARCHIVOS -->
+    <script>
+        // Se ejecuta cuando el DOM está listo para asegurar que los elementos existen
+        window.addEventListener('DOMContentLoaded', () => {
+            const { PDFDocument } = PDFLib;
+            const { jsPDF } = window.jspdf;
 
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('file-input');
+            const fileList = document.getElementById('file-list');
+            const uploadForm = document.getElementById('upload-form');
+            const submitBtn = document.getElementById('submit-btn');
+            const statusMessage = document.getElementById('status-message');
+
+            let filesToUpload = [];
+
+            dropZone.addEventListener('click', () => fileInput.click());
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+                addFiles(Array.from(e.dataTransfer.files));
+            });
+            fileInput.addEventListener('change', () => addFiles(Array.from(fileInput.files)));
+
+            function addFiles(newFiles) {
+                const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'text/plain'];
+                const filtered = newFiles.filter(file => allowedTypes.includes(file.type));
+                filesToUpload.push(...filtered);
+                updateFileListUI();
+            }
+
+            function updateFileListUI() {
+                fileList.innerHTML = '';
+                filesToUpload.forEach((file, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'file-item';
+                    li.draggable = true;
+                    li.dataset.index = index;
+                    li.innerHTML = `<span class="file-item-name">${file.name}</span><button class="remove-btn" onclick="removeFile(event, ${index})">&times;</button>`;
+                    fileList.appendChild(li);
+                });
+                submitBtn.disabled = filesToUpload.length === 0;
+                addDragAndDropHandlers();
+            }
+            
+            window.removeFile = function(event, index) {
+                event.preventDefault();
+                event.stopPropagation();
+                filesToUpload.splice(index, 1);
+                updateFileListUI();
+            }
+
+            function addDragAndDropHandlers() {
+                const items = fileList.querySelectorAll('.file-item');
+                let dragStartIndex;
+                items.forEach(item => {
+                    item.addEventListener('dragstart', (e) => {
+                        dragStartIndex = +item.dataset.index;
+                        item.classList.add('dragging');
+                    });
+                    item.addEventListener('dragend', () => item.classList.remove('dragging'));
+                    item.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        const dragOverIndex = +item.dataset.index;
+                        if (dragStartIndex !== dragOverIndex) {
+                            const dragged = filesToUpload.splice(dragStartIndex, 1)[0];
+                            filesToUpload.splice(dragOverIndex, 0, dragged);
+                            updateFileListUI();
+                            dragStartIndex = dragOverIndex;
+                        }
+                    });
+                });
+            }
+
+            uploadForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (filesToUpload.length === 0) return;
+
+                setLoadingState(true, 'Iniciando proceso...');
+                const finalPdfDoc = await PDFDocument.create();
+
+                for (let i = 0; i < filesToUpload.length; i++) {
+                    const file = filesToUpload[i];
+                    setStatus(`Procesando archivo ${i + 1}/${filesToUpload.length}: ${file.name}`);
+
+                    try {
+                        let tempDocBytes;
+                        if (file.type === 'application/pdf') {
+                            tempDocBytes = await file.arrayBuffer();
+                        } else if (file.type.startsWith('image/')) {
+                            tempDocBytes = await convertImageToPdf(file);
+                        } else if (file.type === 'text/plain') {
+                            tempDocBytes = await convertTextToPdf(file);
+                        }
+
+                        if (tempDocBytes) {
+                            const tempDoc = await PDFDocument.load(tempDocBytes);
+                            const copiedPages = await finalPdfDoc.copyPages(tempDoc, tempDoc.getPageIndices());
+                            copiedPages.forEach(page => finalPdfDoc.addPage(page));
+                        }
+                    } catch (error) {
+                        setStatus(`Error al procesar ${file.name}: ${error.message}`, true);
+                        setLoadingState(false);
+                        return;
+                    }
+                }
+                
+                setStatus('Generando PDF final...');
+                const finalPdfBytes = await finalPdfDoc.save();
+                downloadPdf(finalPdfBytes, 'documento_combinado.pdf');
+                
+                filesToUpload = [];
+                updateFileListUI();
+                setLoadingState(false, '¡Proceso completado!');
+            });
+            
+            async function convertImageToPdf(imageFile) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const doc = new jsPDF({
+                                orientation: img.width > img.height ? 'l' : 'p',
+                                unit: 'px',
+                                format: [img.width, img.height]
+                            });
+                            doc.addImage(img, 'JPEG', 0, 0, img.width, img.height);
+                            resolve(doc.output('arraybuffer'));
+                        };
+                        img.onerror = reject;
+                        img.src = event.target.result;
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(imageFile);
+                });
+            }
+
+            async function convertTextToPdf(textFile) {
+                const text = await textFile.text();
+                const doc = new jsPDF();
+                const lines = doc.splitTextToSize(text, 180);
+                doc.text(lines, 15, 15);
+                return doc.output('arraybuffer');
+            }
+            
+            function setLoadingState(isLoading, message = '') {
+                submitBtn.disabled = isLoading;
+                statusMessage.textContent = message;
+                statusMessage.style.color = isLoading ? '#6c757d' : 'green';
+            }
+
+            function setStatus(message, isError = false) {
+                statusMessage.textContent = message;
+                statusMessage.style.color = isError ? 'red' : '#343a40';
+            }
+
+            function downloadPdf(bytes, filename) {
+                const blob = new Blob([bytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        });
+    </script>
 </body>
 </html>
 
