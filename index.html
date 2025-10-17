@@ -71,8 +71,11 @@
         <div class="grid md:grid-cols-2 gap-x-8 gap-y-4">
             <!-- Columna Izquierda -->
             <div>
-                <label for="studentNames" class="block text-gray-700 text-sm font-bold mb-2">Lista de Galardonados (Formato: Nombre, Género):</label>
-                <textarea id="studentNames" class="w-full h-64 p-3 border border-gray-300 rounded-lg" placeholder="Ej: JUAN PEREZ, M&#10;MARIA LOPEZ, F"></textarea>
+                <div class="flex justify-between items-center mb-2">
+                    <label for="studentNames" class="block text-gray-700 text-sm font-bold">Lista de Galardonados:</label>
+                    <button onclick="clearList()" class="bg-red-500 text-white text-xs font-bold py-1 px-3 rounded-full hover:bg-red-600 transition duration-300">Borrar Lista</button>
+                </div>
+                <textarea id="studentNames" class="w-full h-64 p-3 border border-gray-300 rounded-lg" placeholder="Escribe un nombre y presiona Enter para autocompletar el género..."></textarea>
             </div>
             <!-- Columna Derecha -->
             <div>
@@ -150,7 +153,10 @@
                             <p class="grade-display text-lg font-medium text-gray-700 mt-2"></p>
                         </div>
                         <div class="body-text text-center mx-auto max-w-3xl text-sm md:text-base">
-                            <p>En reconocimiento a su excepcional talento, creatividad y dominio técnico, cualidades que le hicieron <span class="gender-award-text"></span> del <strong class="position-display"></strong> en la categoría de <strong class="category-display"></strong> durante el "<strong class="contest-name-display"></strong>".</p>
+                            <p>
+                                En reconocimiento a su excepcional talento, creatividad y dominio técnico, cualidades que le hicieron <span class="gender-award-text"></span> del <strong class="position-display"></strong> en la categoría de <strong class="category-display"></strong> durante el
+                                <span class="block mt-1 font-bold text-lg" style="color: var(--color-azul-medio);">"<span class="contest-name-display"></span>"</span>
+                            </p>
                         </div>
                     </main>
                     <footer class="text-center pb-4">
@@ -185,34 +191,53 @@
         const positionInput = document.getElementById('positionInput');
         const contestNameInput = document.getElementById('contestNameInput');
 
-        // Lista de estudiantes inicial con el nuevo formato
         const initialStudents = [
-            "AREVALO ARCON JOSE, M",
-            "GONZALEZ SILVERA LILIBETH, F",
-            "LINARES ESTEVEZ MAYTE, F",
-            "LUQUE GONZALEZ YANKELIS, F",
-            "SIERRA OROZCO ANGGY, F",
-            "SILVERA ESCOBAR DAYAR, F"
+            "AREVALO ARCON JOSE, M", "GONZALEZ SILVERA LILIBETH, F", "LINARES ESTEVEZ MAYTE, F",
+            "LUQUE GONZALEZ YANKELIS, F", "SIERRA OROZCO ANGGY, F", "SILVERA ESCOBAR DAYAR, F"
         ];
         studentNamesTextarea.value = initialStudents.join('\n');
 
+        function guessGender(name) {
+            const firstName = name.trim().toUpperCase().split(' ')[0];
+            const femaleExceptions = ['LILIBETH', 'MAYTE', 'YANKELIS', 'ANGGY', 'DAYAR'];
+            if (femaleExceptions.includes(firstName)) return 'F';
+            if (firstName.endsWith('A')) return 'F';
+            if (firstName.endsWith('O') || firstName === 'JOSE') return 'M';
+            return 'F'; // Default a Femenino por si no encuentra coincidencia
+        }
+
+        studentNamesTextarea.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                const lines = studentNamesTextarea.value.split('\n');
+                const lineIndexToProcess = lines.length - 2;
+
+                if (lineIndexToProcess >= 0) {
+                    let line = lines[lineIndexToProcess];
+                    if (line.trim() && !line.includes(',')) {
+                        const name = line.trim();
+                        const gender = guessGender(name);
+                        lines[lineIndexToProcess] = `${name.toUpperCase()}, ${gender}`;
+                        studentNamesTextarea.value = lines.join('\n');
+                    }
+                }
+            }
+        });
+
+        function clearList() {
+            studentNamesTextarea.value = '';
+        }
+
         function generateDiplomas() {
             diplomasContainer.innerHTML = '';
-            
-            const names = studentNamesTextarea.value.split('\n').filter(name => name.trim() !== '');
-            const grade = gradeInput.value;
-            const role = roleInput.value.toUpperCase();
-            const category = categoryInput.value;
-            const date = dateInput.value;
-            const teacherName = teacherNameInput.value;
-            const teacherTitle = teacherTitleInput.value;
-            const position = positionInput.value;
-            const contestName = contestNameInput.value;
+            const formData = {
+                names: studentNamesTextarea.value.split('\n').filter(name => name.trim() !== ''),
+                grade: gradeInput.value, role: roleInput.value.toUpperCase(), category: categoryInput.value,
+                date: dateInput.value, teacherName: teacherNameInput.value, teacherTitle: teacherTitleInput.value,
+                position: positionInput.value, contestName: contestNameInput.value
+            };
 
-
-            names.forEach(name => {
+            formData.names.forEach(name => {
                 const diplomaNode = diplomaTemplate.content.cloneNode(true);
-
                 const parts = name.split(',');
                 const studentName = parts[0].trim();
                 const gender = (parts[1] || '').trim().toUpperCase();
@@ -221,22 +246,21 @@
                 const genderAwardTextElement = diplomaNode.querySelector('.gender-award-text');
 
                 if (gender === 'M') {
-                    genderTextElement.textContent = `AL ${role}:`;
+                    genderTextElement.textContent = `AL ${formData.role}:`;
                     genderAwardTextElement.textContent = 'merecedor';
                 } else {
-                    genderTextElement.textContent = `A LA ${role}:`;
+                    genderTextElement.textContent = `A LA ${formData.role}:`;
                     genderAwardTextElement.textContent = 'merecedora';
                 }
 
                 diplomaNode.querySelector('.recipient-display').textContent = studentName;
-                diplomaNode.querySelector('.grade-display').textContent = `del Grado ${grade}`;
-                diplomaNode.querySelector('.position-display').textContent = position;
-                diplomaNode.querySelector('.category-display').textContent = category;
-                diplomaNode.querySelector('.contest-name-display').textContent = contestName;
-                diplomaNode.querySelector('.date-display').textContent = `Dado en Baranoa, a los ${date}.`;
-                diplomaNode.querySelector('.teacher-name-display').textContent = teacherName.toUpperCase();
-                diplomaNode.querySelector('.teacher-title-display').textContent = teacherTitle;
-
+                diplomaNode.querySelector('.grade-display').textContent = `del Grado ${formData.grade}`;
+                diplomaNode.querySelector('.position-display').textContent = formData.position;
+                diplomaNode.querySelector('.category-display').textContent = formData.category;
+                diplomaNode.querySelector('.contest-name-display').textContent = formData.contestName;
+                diplomaNode.querySelector('.date-display').textContent = `Dado en Baranoa, a los ${formData.date}.`;
+                diplomaNode.querySelector('.teacher-name-display').textContent = formData.teacherName.toUpperCase();
+                diplomaNode.querySelector('.teacher-title-display').textContent = formData.teacherTitle;
 
                 diplomasContainer.appendChild(diplomaNode);
             });
@@ -256,11 +280,9 @@
                 html2canvas:  { scale: 2, useCORS: true },
                 jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
             };
-
             html2pdf().from(element).set(opt).save();
         }
 
-        // Generar diplomas al cargar para mostrar algo
         window.onload = generateDiplomas;
     </script>
 
